@@ -1,6 +1,7 @@
 package realize_service
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"simple-farme/basic-server/abstract-interface"
@@ -18,6 +19,17 @@ type Server struct {
 	IP string
 
 }
+//define the handle api of client
+func CalllBackToClient(conn *net.TCPConn,data []byte,cnt int)error{
+	//callback
+	fmt.Println("CallBackToClient...")
+	if _,err :=conn.Write(data[:cnt]);err !=nil{
+		fmt.Println("write back buf err",err)
+		return errors.New("CallBackToClient ERROR")
+	}
+	return nil
+}
+
 //start server
 func (s *Server) Start()  {
 	fmt.Printf("Server Listenner at IP:%s,Port%d,is starting\n",s.IP,s.Port)
@@ -36,6 +48,8 @@ func (s *Server) Start()  {
 			return
 		}
 		fmt.Println("start successfully")
+		var cid uint32
+		cid=0
 		//block and wait,for read and write
 		for{
 			conn,err :=listenner.AcceptTCP()
@@ -43,23 +57,10 @@ func (s *Server) Start()  {
 				fmt.Println("accept err",err)
 				continue
 			}
-			//service code
-			//callback
-			go func() {
-				for  {
-					buf:=make([]byte,512)
-					cnt,err :=conn.Read(buf)
-					if err !=nil {
-						fmt.Println("recevie buf err",err)
-						continue
-					}
-					//callback
-					if _,err :=conn.Write(buf[:cnt]);err!=nil{
-						fmt.Println("callback buf err",err)
-						continue
-					}
-				}
-			}()
+			//bind with conn to get linked moduel
+			dealConn:=NewConnection(conn,cid,CalllBackToClient)
+			cid++
+			go dealConn.Start()
 		}
 
 	}()
