@@ -13,16 +13,18 @@ type Connection struct {
 	ConnID uint32
 	//status
 	isClosed bool
-	//binded api
+	//bind api
 	handleAPI abstract_interface.HandleFunc
 	//stop channel
 	ExitChan chan bool
+	//router
+	Router abstract_interface.ARouter
 }
-func NewConnection(conn *net.TCPConn,connID uint32,callback_api abstract_interface.HandleFunc) *Connection{
+func NewConnection(conn *net.TCPConn,connID uint32,router abstract_interface.ARouter) *Connection{
 	c:=&Connection{
 		Conn: conn,
 		ConnID:connID,
-		handleAPI: callback_api,
+		Router: router,
 		isClosed: false,
 		ExitChan: make(chan bool,1),
 	}
@@ -36,16 +38,23 @@ func (c *Connection) StartReader(){
 	for {
 		//read data buf,maxbuf 512byte
 		buf:=make([]byte,512)
-		cnt,err:=c.Conn.Read(buf)
+		_,err:=c.Conn.Read(buf)
 		if err !=nil{
 			fmt.Println("recv buf err",err)
 			continue
 		}
-		//use HandleAPI
-		if err :=c.handleAPI(c.Conn,buf,cnt);err !=nil{
-			fmt.Println("ConnID",c.ConnID,"handle is error",err)
-			break
+		//get request data
+		req :=Request{
+			conn:c,
+			data:buf,
 		}
+		//register router
+		go func(request abstract_interface.ARequest) {
+			//use router
+			c.Router.PreHander(request)
+			c.Router.Hander(request)
+			c.Router.PostHander(request)
+		}(&req)
 	}
 }
 //start connection

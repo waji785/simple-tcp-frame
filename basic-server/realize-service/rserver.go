@@ -1,7 +1,6 @@
 package realize_service
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"simple-farme/basic-server/abstract-interface"
@@ -17,18 +16,10 @@ type Server struct {
 	Port int
 	//IP
 	IP string
+	//router
+	Router abstract_interface.ARouter
+}
 
-}
-//define the handle api of client
-func CalllBackToClient(conn *net.TCPConn,data []byte,cnt int)error{
-	//callback
-	fmt.Println("CallBackToClient...")
-	if _,err :=conn.Write(data[:cnt]);err !=nil{
-		fmt.Println("write back buf err",err)
-		return errors.New("CallBackToClient ERROR")
-	}
-	return nil
-}
 
 //start server
 func (s *Server) Start()  {
@@ -58,7 +49,7 @@ func (s *Server) Start()  {
 				continue
 			}
 			//bind with conn to get linked moduel
-			dealConn:=NewConnection(conn,cid,CalllBackToClient)
+			dealConn:=NewConnection(conn,cid,s.Router)
 			cid++
 			go dealConn.Start()
 		}
@@ -75,13 +66,18 @@ func (s *Server) Run()  {
 
 	//block,for do sth
 }
+func (s *Server) AddRouter(router abstract_interface.ARouter){
+	s.Router=router
+	fmt.Println("Add Router successfully")
+}
 //initialize server
-func NewServer(name string) abstract_interface.Aserver{
+func NewServer(name string) abstract_interface.AServer{
 	s:=&Server{
 		Name: name,
 		IPVersion: "tcp4",
 		IP: "0.0.0.0",
 		Port: 8554,
+		Router:nil,
 	}
 	return s
 }

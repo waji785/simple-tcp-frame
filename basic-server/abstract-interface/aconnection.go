@@ -3,13 +3,13 @@ package abstract_interface
 import "net"
 
 //define the interface of linked moduel
-type Aconnection interface {
+type AConnection interface {
 	//start connection
 	Start()
 	//stop connection
 	Stop()
 	//get conn from socket
-	GetTCPConnnection() *net.TCPConn
+	GetTCPConnection() *net.TCPConn
 	//get connection ID
 	GetConnID() uint32
 	//get TCP status
