@@ -44,8 +44,8 @@ func init() {
 	//default value
 	GlobalObject = &GlobalObj{
 		Name:           "xxx",
-		Version:        "v0.4",
-		TcpPort:        8999,
+		Version:        "v0.5",
+		TcpPort:        8554,
 		Host:           "0.0.0.0",
 		MaxConn:        1000,
 		MaxPackageSize: 4096,

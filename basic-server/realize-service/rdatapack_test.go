@@ -33,10 +33,10 @@ func TestDataPack(t *testing.T){
 						fmt.Println("server unpack err:",err)
 						return
 					}
-					if msgHead.GetMsLen()>0{
+					if msgHead.GetMsgLen()>0{
 						//read data
 						msg:=msgHead.(*Message)
-						msg.Data=make([]byte,msg.GetMsLen())
+						msg.Data=make([]byte,msg.GetMsgLen())
 						_,err:=io.ReadFull(conn,msg.Data)
 						if err !=nil{
 							fmt.Println("server unpack data err:",err)

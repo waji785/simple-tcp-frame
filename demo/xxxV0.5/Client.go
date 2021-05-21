@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
+	realize_service "simple-farme/basic-server/realize-service"
 	"time"
 )
 
@@ -16,17 +18,36 @@ func main() {
 		return
 	}
 	for {
-		_, err := conn.Write([]byte("hello"))
-		if err != nil {
-			fmt.Println("write conn err", err)
+		dp:=realize_service.NewDataPack()
+		binaryMsg,err:=dp.Pack(realize_service.NewMsgPackage(0,[]byte("test message")))
+		if err !=nil{
+			fmt.Println("pack error:",err)
 			return
 		}
-		buf := make([]byte, 512)
-		cnt, err := conn.Read(buf)
-		fmt.Println("read buf err")
-		return
+		if _,err :=conn.Write(binaryMsg);err!=nil{
+			fmt.Println("write error",err)
+			return
+		}
 
-		fmt.Printf("server call back: %s,cnt=%d\n", buf, cnt)
+		binaryHead:=make([]byte,dp.GetHeadLen())
+		if _,err:=io.ReadFull(conn,binaryHead);err!=nil{
+			fmt.Println("read head error",err)
+			break
+		}
+		msgHead,err :=dp.Unpack(binaryHead)
+		if err!=nil{
+			fmt.Println("client unpack msghead error",err)
+			break
+		}
+		if msgHead.GetMsgLen()>0{
+			msg:=msgHead.(*realize_service.Message)
+			msg.Data=make([]byte,msg.GetMsgLen())
+			if _,err:=io.ReadFull(conn,msg.Data);err !=nil{
+				fmt.Println("read nsg data error",err)
+				return
+			}
+			fmt.Println("recv msg: id=",msg.Id,"len=",msg.DataLen,"data=",msg.Data)
+		}
 		time.Sleep(1 * time.Second)
 	}
 
