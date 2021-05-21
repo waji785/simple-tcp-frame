@@ -1,6 +1,7 @@
 package abstract_interface
+
 //define a service interface
-type  AServer interface{
+type AServer interface {
 	//start
 	Start()
 	//stop

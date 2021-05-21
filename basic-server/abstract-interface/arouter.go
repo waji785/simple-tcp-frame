@@ -1,4 +1,5 @@
 package abstract_interface
+
 //the interface of router
 type ARouter interface {
 	//before conn,Hook func

@@ -2,7 +2,7 @@ package abstract_interface
 
 import "net"
 
-//define the interface of linked moduel
+//define the interface of linked mod
 type AConnection interface {
 	//start connection
 	Start()
@@ -15,7 +15,8 @@ type AConnection interface {
 	//get TCP status
 	RemoteAddr() net.Addr
 	//post data to client
-	Send(data []byte) error
+	SendMsg(msgId uint32, data []byte) error
 }
+
 //todo sth
-type HandleFunc func(*net.TCPConn,[]byte,int) error
+type HandleFunc func(*net.TCPConn, []byte, int) error

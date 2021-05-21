@@ -24,30 +24,32 @@ type GlobalObj struct {
 	//MAX data package
 	MaxPackageSize uint32
 }
+
 //define global obj
 var GlobalObject *GlobalObj
+
 //reload from json
-func (g *GlobalObj) Reload(){
-	data,err :=ioutil.ReadFile("")
-	if err !=nil{
+func (g *GlobalObj) Reload() {
+	data, err := ioutil.ReadFile("")
+	if err != nil {
 		panic(err)
 	}
 	//resolve to struct
-	err=json.Unmarshal(data,&GlobalObject)
-	if err !=nil{
+	err = json.Unmarshal(data, &GlobalObject)
+	if err != nil {
 		panic(err)
 	}
 }
-func init(){
+func init() {
 	//default value
-	GlobalObject=&GlobalObj{
-		Name:"xxx",
-		Version: "v0.4",
-		TcpPort: 8999,
-		Host: "0.0.0.0",
-		MaxConn: 1000,
-		MaxPackageSize:4096,
+	GlobalObject = &GlobalObj{
+		Name:           "xxx",
+		Version:        "v0.5",
+		TcpPort:        8554,
+		Host:           "0.0.0.0",
+		MaxConn:        1000,
+		MaxPackageSize: 4096,
 	}
 	//load from json
-	GlobalObject.Reload()
+	//GlobalObject.Reload()
 }
