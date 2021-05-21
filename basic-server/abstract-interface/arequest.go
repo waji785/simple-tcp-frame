@@ -7,4 +7,6 @@ type ARequest interface {
 	GetConnection() AConnection
 	//get request data
 	GetData() []byte
+	//get message id
+	GetMsgID() uint32
 }

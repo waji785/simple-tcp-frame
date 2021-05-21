@@ -15,7 +15,7 @@ type AConnection interface {
 	//get TCP status
 	RemoteAddr() net.Addr
 	//post data to client
-	Send(data []byte) error
+	SendMsg(msgId uint32, data []byte) error
 }
 
 //todo sth

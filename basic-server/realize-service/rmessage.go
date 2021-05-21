@@ -5,12 +5,20 @@ type Message struct {
 	DataLen uint32 //message length
 	Data    []byte //message region
 }
+//create message pack
+func NewMsgPackage(id uint32,data []byte) *Message{
+	return &Message{
+		Id:id,
+		DataLen: uint32(len(data)),
+		Data: data,
+	}
+}
 //get message id
 func (m *Message) GetMsgId() uint32{
 	return m.Id
 }
 //get message length
-func (m *Message) GetMsLen() uint32{
+func (m *Message) GetMsgLen() uint32{
 	return  m.DataLen
 }
 //get data

@@ -1,7 +1,9 @@
 package realize_service
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"simple-farme/basic-server/abstract-interface"
 )
@@ -38,17 +40,33 @@ func (c *Connection) StartReader() {
 	defer fmt.Println("connID=", c.ConnID, "Reader is exit, remote addr is", c.RemoteAddr().String())
 	defer c.Stop()
 	for {
-		//read data buf,maxbuf 512byte
-		buf := make([]byte, 512)
-		_, err := c.Conn.Read(buf)
-		if err != nil {
-			fmt.Println("recv buf err", err)
-			continue
+		dp:=NewDataPack()
+		//read message head 8byte
+		headData:=make([]byte,dp.GetHeadLen())
+		if _,err :=io.ReadFull(c.GetTCPConnection(),headData);err!=nil{
+			fmt.Println("read msg head err",err)
+			break
 		}
+		//unpack get message id and datalen
+		msg,err:=dp.Unpack(headData)
+		if err!=nil{
+			fmt.Println("unpack err",err)
+			break
+		}
+		//put dtat in message.Data
+		var data []byte
+		if msg.GetMsgLen()>0{
+			data =make([]byte,msg.GetMsgLen())
+			if _,err :=io.ReadFull(c.GetTCPConnection(),data);err!=nil{
+				fmt.Println("read msg data err",err)
+				break
+			}
+		}
+		msg.SetData(data)
 		//get request data
 		req := Request{
 			conn: c,
-			data: buf,
+			msg: msg,
 		}
 		//register router
 		go func(request abstract_interface.ARequest) {
@@ -58,6 +76,25 @@ func (c *Connection) StartReader() {
 			c.Router.PostHander(request)
 		}(&req)
 	}
+}
+//send msg method,pack data and send
+func (c *Connection) SendMsg(msgId uint32, data []byte) error{
+	if c.isClosed==true{
+		return errors.New("Connection closed when send msg")
+	}
+	//pack data
+	dp:=NewDataPack()
+	binaryMsg,err:=dp.Pack(NewMsgPackage(msgId,data))
+	if err !=nil{
+		fmt.Println("Pack error msg id=",msgId)
+		return errors.New("Pack error msg")
+	}
+	if _,err :=c.Conn.Write(binaryMsg);err !=nil{
+		fmt.Println("write msg id",msgId,"error:",err)
+		return errors.New("conn Write error")
+	}
+	return nil
+
 }
 
 //start connection
@@ -95,7 +132,3 @@ func (c *Connection) RemoteAddr() net.Addr {
 
 }
 
-//post data to client
-func (c *Connection) Send(data []byte) error {
-	return nil
-}

@@ -4,7 +4,7 @@ type AMessage interface {
 	//get message id
 	GetMsgId() uint32
 	//get message length
-	GetMsLen() uint32
+	GetMsgLen() uint32
 	//get data
 	GetData() []byte
 	//set data

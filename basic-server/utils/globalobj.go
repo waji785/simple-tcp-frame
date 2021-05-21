@@ -51,5 +51,5 @@ func init() {
 		MaxPackageSize: 4096,
 	}
 	//load from json
-	GlobalObject.Reload()
+	//GlobalObject.Reload()
 }
