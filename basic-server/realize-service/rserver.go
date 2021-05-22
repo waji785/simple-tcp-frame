@@ -18,7 +18,7 @@ type Server struct {
 	//IP
 	IP string
 	//router
-	Router abstract_interface.ARouter
+	MsgHandle abstract_interface.AMsgHandle
 }
 
 //start server
@@ -52,7 +52,7 @@ func (s *Server) Start() {
 				continue
 			}
 			//bind with conn to get linked moduel
-			dealConn := NewConnection(conn, cid, s.Router)
+			dealConn := NewConnection(conn, cid, s.MsgHandle)
 			cid++
 			go dealConn.Start()
 		}
@@ -69,8 +69,8 @@ func (s *Server) Run() {
 
 	//block,for do sth
 }
-func (s *Server) AddRouter(router abstract_interface.ARouter) {
-	s.Router = router
+func (s *Server) AddRouter(msgID uint32,router abstract_interface.ARouter) {
+	s.MsgHandle.AddRouter(msgID,router)
 	fmt.Println("Add Router successfully")
 }
 
@@ -81,7 +81,7 @@ func NewServer(name string) abstract_interface.AServer {
 		IPVersion: "tcp4",
 		IP:        utils.GlobalObject.Host,
 		Port:      utils.GlobalObject.TcpPort,
-		Router:    nil,
+		MsgHandle:NewMsgHandle(),
 	}
 	return s
 }

@@ -20,14 +20,14 @@ type Connection struct {
 	//stop channel
 	ExitChan chan bool
 	//router
-	Router abstract_interface.ARouter
+	MsgHandle abstract_interface.AMsgHandle
 }
 
-func NewConnection(conn *net.TCPConn, connID uint32, router abstract_interface.ARouter) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, msgHandler abstract_interface.AMsgHandle) *Connection {
 	c := &Connection{
 		Conn:     conn,
 		ConnID:   connID,
-		Router:   router,
+		MsgHandle:   msgHandler,
 		isClosed: false,
 		ExitChan: make(chan bool, 1),
 	}
@@ -69,12 +69,7 @@ func (c *Connection) StartReader() {
 			msg: msg,
 		}
 		//register router
-		go func(request abstract_interface.ARequest) {
-			//use router
-			c.Router.PreHander(request)
-			c.Router.Hander(request)
-			c.Router.PostHander(request)
-		}(&req)
+		go c.MsgHandle.DoMsgHandle(&req)
 	}
 }
 //send msg method,pack data and send
