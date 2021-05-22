@@ -19,6 +19,8 @@ type Connection struct {
 	handleAPI abstract_interface.HandleFunc
 	//stop channel
 	ExitChan chan bool
+	//buff ,used for message communication between go
+	msgChan chan []byte
 	//router
 	MsgHandle abstract_interface.AMsgHandle
 }
@@ -29,6 +31,7 @@ func NewConnection(conn *net.TCPConn, connID uint32, msgHandler abstract_interfa
 		ConnID:   connID,
 		MsgHandle:   msgHandler,
 		isClosed: false,
+		msgChan: make(chan []byte),
 		ExitChan: make(chan bool, 1),
 	}
 	return c
@@ -72,6 +75,21 @@ func (c *Connection) StartReader() {
 		go c.MsgHandle.DoMsgHandle(&req)
 	}
 }
+func (c *Connection) StartWriter(){
+	fmt.Println("Write Gortine is running")
+	defer fmt.Println(c.RemoteAddr().String(),"[conn Write exit]")
+	for{
+		select {
+		case data:=<-c.msgChan:
+			if _,err:=c.Conn.Write(data);err !=nil{
+				fmt.Println("Send data error",err)
+				return
+			}
+		case <-c.ExitChan:
+			return
+		}
+	}
+}
 //send msg method,pack data and send
 func (c *Connection) SendMsg(msgId uint32, data []byte) error{
 	if c.isClosed==true{
@@ -84,10 +102,7 @@ func (c *Connection) SendMsg(msgId uint32, data []byte) error{
 		fmt.Println("Pack error msg id=",msgId)
 		return errors.New("Pack error msg")
 	}
-	if _,err :=c.Conn.Write(binaryMsg);err !=nil{
-		fmt.Println("write msg id",msgId,"error:",err)
-		return errors.New("conn Write error")
-	}
+	c.msgChan<-binaryMsg
 	return nil
 
 }
@@ -97,6 +112,7 @@ func (c *Connection) Start() {
 	fmt.Println("conn start... connID=", c.ConnID)
 	//todo sth
 	go c.StartReader()
+	go c.StartWriter()
 }
 
 //stop connection
