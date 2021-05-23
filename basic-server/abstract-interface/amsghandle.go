@@ -5,4 +5,8 @@ type AMsgHandle interface{
 	DoMsgHandle(request ARequest)
 	//router specific logic
 	AddRouter(msgID uint32,router ARouter)
+	//statr workpool
+	StartWorkerPool()
+	//give msg to mq,by worker process
+	SendMsgToTaskQueue(request ARequest)
 }

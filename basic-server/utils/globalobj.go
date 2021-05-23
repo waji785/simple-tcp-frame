@@ -23,6 +23,10 @@ type GlobalObj struct {
 	MaxConn int
 	//MAX data package
 	MaxPackageSize uint32
+	//work goroutine nums
+	WorkerPoolSize uint32
+	//max worker go
+	MaxWorkerTaskLen uint32
 }
 
 //define global obj
@@ -44,11 +48,13 @@ func init() {
 	//default value
 	GlobalObject = &GlobalObj{
 		Name:           "xxx",
-		Version:        "v0.5",
+		Version:        "v0.8",
 		TcpPort:        8554,
 		Host:           "0.0.0.0",
 		MaxConn:        1000,
 		MaxPackageSize: 4096,
+		WorkerPoolSize: 10,
+		MaxWorkerTaskLen: 1024,
 	}
 	//load from json
 	//GlobalObject.Reload()

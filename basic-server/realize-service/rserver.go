@@ -29,6 +29,8 @@ func (s *Server) Start() {
 		utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
 	//if it's not use go func,then start() will be always block
 	go func() {
+		//start mq and workPool
+		s.MsgHandle.StartWorkerPool()
 		//get a TCP addr
 		addr, err := net.ResolveTCPAddr(s.IPVersion, fmt.Sprint("%s,%d", s.IP, s.Port))
 		if err != nil {

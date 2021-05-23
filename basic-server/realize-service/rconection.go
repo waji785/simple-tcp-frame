@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"simple-farme/basic-server/abstract-interface"
+	"simple-farme/basic-server/utils"
 )
 
 type Connection struct {
@@ -71,8 +72,14 @@ func (c *Connection) StartReader() {
 			conn: c,
 			msg: msg,
 		}
-		//register router
-		go c.MsgHandle.DoMsgHandle(&req)
+		if utils.GlobalObject.WorkerPoolSize>0{
+			//workerPool has opened,send msg to workerPool
+			c.MsgHandle.SendMsgToTaskQueue(&req)
+		}else {
+			//call router
+			//execute business
+			go c.MsgHandle.DoMsgHandle(&req)
+		}
 	}
 }
 func (c *Connection) StartWriter(){
