@@ -9,5 +9,5 @@ type AServer interface {
 	//run
 	Run()
 	//router,support of server
-	AddRouter(router ARouter)
+	AddRouter(msgID uint32,router ARouter)
 }

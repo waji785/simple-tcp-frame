@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"simple-farme/basic-server/abstract-interface"
+	"simple-farme/basic-server/utils"
 )
 
 type Connection struct {
@@ -19,16 +20,19 @@ type Connection struct {
 	handleAPI abstract_interface.HandleFunc
 	//stop channel
 	ExitChan chan bool
+	//buff ,used for message communication between go
+	msgChan chan []byte
 	//router
-	Router abstract_interface.ARouter
+	MsgHandle abstract_interface.AMsgHandle
 }
 
-func NewConnection(conn *net.TCPConn, connID uint32, router abstract_interface.ARouter) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, msgHandler abstract_interface.AMsgHandle) *Connection {
 	c := &Connection{
 		Conn:     conn,
 		ConnID:   connID,
-		Router:   router,
+		MsgHandle:   msgHandler,
 		isClosed: false,
+		msgChan: make(chan []byte),
 		ExitChan: make(chan bool, 1),
 	}
 	return c
@@ -68,13 +72,29 @@ func (c *Connection) StartReader() {
 			conn: c,
 			msg: msg,
 		}
-		//register router
-		go func(request abstract_interface.ARequest) {
-			//use router
-			c.Router.PreHander(request)
-			c.Router.Hander(request)
-			c.Router.PostHander(request)
-		}(&req)
+		if utils.GlobalObject.WorkerPoolSize>0{
+			//workerPool has opened,send msg to workerPool
+			c.MsgHandle.SendMsgToTaskQueue(&req)
+		}else {
+			//call router
+			//execute business
+			go c.MsgHandle.DoMsgHandle(&req)
+		}
+	}
+}
+func (c *Connection) StartWriter(){
+	fmt.Println("Write Gortine is running")
+	defer fmt.Println(c.RemoteAddr().String(),"[conn Write exit]")
+	for{
+		select {
+		case data:=<-c.msgChan:
+			if _,err:=c.Conn.Write(data);err !=nil{
+				fmt.Println("Send data error",err)
+				return
+			}
+		case <-c.ExitChan:
+			return
+		}
 	}
 }
 //send msg method,pack data and send
@@ -89,10 +109,7 @@ func (c *Connection) SendMsg(msgId uint32, data []byte) error{
 		fmt.Println("Pack error msg id=",msgId)
 		return errors.New("Pack error msg")
 	}
-	if _,err :=c.Conn.Write(binaryMsg);err !=nil{
-		fmt.Println("write msg id",msgId,"error:",err)
-		return errors.New("conn Write error")
-	}
+	c.msgChan<-binaryMsg
 	return nil
 
 }
@@ -102,6 +119,7 @@ func (c *Connection) Start() {
 	fmt.Println("conn start... connID=", c.ConnID)
 	//todo sth
 	go c.StartReader()
+	go c.StartWriter()
 }
 
 //stop connection
