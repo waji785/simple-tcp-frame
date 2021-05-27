@@ -21,6 +21,11 @@ type Server struct {
 	MsgHandle abstract_interface.AMsgHandle
 	//server conn manager
 	ConnManager abstract_interface.AConnManager
+	//hook func
+	OnConnStart func(conn abstract_interface.AConnection)
+	//stop hook before destroy conn
+	OnConnStop func(conn abstract_interface.AConnection)
+
 }
 
 //start server
@@ -101,4 +106,26 @@ func NewServer(name string) abstract_interface.AServer {
 	}
 	//add conn to connManager
 	return s
+}
+//register OnConnStart
+func(s *Server) SetOnConnStart(hookFunc func(connection abstract_interface.AConnection)){
+	s.OnConnStart=hookFunc
+}
+//register OnConnStop
+func(s *Server) SetOnConnStop(hookFunc func(connection abstract_interface.AConnection)){
+	s.OnConnStop=hookFunc
+}
+//call OnConnStart
+func(s *Server) CallOnConnStart(conn abstract_interface.AConnection){
+	if s.OnConnStart!=nil{
+		fmt.Println("Call OnConnStart..")
+		s.OnConnStart(conn)
+	}
+}
+//call OnConnStop
+func(s *Server) CallOnConnStop(conn abstract_interface.AConnection){
+	if s.OnConnStop !=nil{
+		fmt.Println("Call OnConnStop...")
+		s.OnConnStop(conn)
+	}
 }

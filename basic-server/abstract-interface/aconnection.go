@@ -16,6 +16,12 @@ type AConnection interface {
 	RemoteAddr() net.Addr
 	//post data to client
 	SendMsg(msgId uint32, data []byte) error
+	//set conn property
+	SetProperty(key string,value interface{})
+	//get conn property
+	GetProperty(key string)(interface{},error)
+	//remove conn property
+	RemoveProperty(key string)
 }
 
 //todo sth

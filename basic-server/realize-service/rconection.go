@@ -7,6 +7,7 @@ import (
 	"net"
 	"simple-farme/basic-server/abstract-interface"
 	"simple-farme/basic-server/utils"
+	"sync"
 )
 
 type Connection struct {
@@ -26,6 +27,10 @@ type Connection struct {
 	msgChan chan []byte
 	//router
 	MsgHandle abstract_interface.AMsgHandle
+	//conn map
+	property map[string]interface{}
+	//conn lock
+	propertyLock sync.RWMutex
 }
 
 func NewConnection(server abstract_interface.AServer,conn *net.TCPConn, connID uint32, msgHandler abstract_interface.AMsgHandle) *Connection {
@@ -37,6 +42,7 @@ func NewConnection(server abstract_interface.AServer,conn *net.TCPConn, connID u
 		isClosed: false,
 		msgChan: make(chan []byte),
 		ExitChan: make(chan bool, 1),
+		property: make(map[string]interface{}),
 	}
 	c.TcpServer.GetConnectionManager().Add(c)
 	return c
@@ -117,6 +123,27 @@ func (c *Connection) SendMsg(msgId uint32, data []byte) error{
 	return nil
 
 }
+func (c *Connection)SetProperty(key string,value interface{}){
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+	c.property[key]=value
+}
+//get conn property
+func (c *Connection)GetProperty(key string)(interface{},error){
+	c.propertyLock.RLock()
+	defer c.propertyLock.RUnlock()
+	if value,ok:=c.property[key];ok{
+		return value,nil
+	}else{
+		return nil, errors.New("no property found")
+	}
+}
+//remove conn property
+func (c *Connection)RemoveProperty(key string){
+	c.propertyLock.Lock()
+	defer c.propertyLock.RUnlock()
+	delete(c.property,key)
+}
 
 //start connection
 func (c *Connection) Start() {
@@ -124,6 +151,8 @@ func (c *Connection) Start() {
 	//todo sth
 	go c.StartReader()
 	go c.StartWriter()
+	//call hook
+	c.TcpServer.CallOnConnStart(c)
 }
 
 //stop connection
@@ -133,6 +162,8 @@ func (c *Connection) Stop() {
 		return
 	}
 	c.isClosed = true
+	//call hook
+	c.TcpServer.CallOnConnStop(c)
 	//close socket
 	c.Conn.Close()
 	c.ExitChan<-true
