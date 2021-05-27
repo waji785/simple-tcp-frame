@@ -19,6 +19,13 @@ type Server struct {
 	IP string
 	//router
 	MsgHandle abstract_interface.AMsgHandle
+	//server conn manager
+	ConnManager abstract_interface.AConnManager
+	//hook func
+	OnConnStart func(conn abstract_interface.AConnection)
+	//stop hook before destroy conn
+	OnConnStop func(conn abstract_interface.AConnection)
+
 }
 
 //start server
@@ -40,7 +47,7 @@ func (s *Server) Start() {
 		//listen TCP addr
 		listenner, err := net.ListenTCP(s.IPVersion, addr)
 		if err != nil {
-			fmt.Println("listenerr", err)
+			fmt.Println("listener", err)
 			return
 		}
 		fmt.Println("start successfully")
@@ -53,8 +60,15 @@ func (s *Server) Start() {
 				fmt.Println("accept err", err)
 				continue
 			}
-			//bind with conn to get linked moduel
-			dealConn := NewConnection(conn, cid, s.MsgHandle)
+			//judge if connections is exceeded
+			if s.ConnManager.Len()>=utils.GlobalObject.MaxConn{
+				//TODO return error to client
+				fmt.Println("Too Many Connection",utils.GlobalObject.MaxConn)
+				conn.Close()
+				continue
+			}
+			//bind with conn to get linked module
+			dealConn := NewConnection(s,conn, cid, s.MsgHandle)
 			cid++
 			go dealConn.Start()
 		}
@@ -64,6 +78,8 @@ func (s *Server) Start() {
 }
 func (s *Server) Stop() {
 	//TODO malloc
+	fmt.Println("[Stop]xxx server name",s.Name)
+	s.ConnManager.ClearConn()
 }
 func (s *Server) Run() {
 	s.Start()
@@ -75,7 +91,9 @@ func (s *Server) AddRouter(msgID uint32,router abstract_interface.ARouter) {
 	s.MsgHandle.AddRouter(msgID,router)
 	fmt.Println("Add Router successfully")
 }
-
+func (s *Server) GetConnectionManager() abstract_interface.AConnManager{
+	return s.ConnManager
+}
 //initialize server
 func NewServer(name string) abstract_interface.AServer {
 	s := &Server{
@@ -84,6 +102,30 @@ func NewServer(name string) abstract_interface.AServer {
 		IP:        utils.GlobalObject.Host,
 		Port:      utils.GlobalObject.TcpPort,
 		MsgHandle:NewMsgHandle(),
+		ConnManager: NewConnManager(),
 	}
+	//add conn to connManager
 	return s
+}
+//register OnConnStart
+func(s *Server) SetOnConnStart(hookFunc func(connection abstract_interface.AConnection)){
+	s.OnConnStart=hookFunc
+}
+//register OnConnStop
+func(s *Server) SetOnConnStop(hookFunc func(connection abstract_interface.AConnection)){
+	s.OnConnStop=hookFunc
+}
+//call OnConnStart
+func(s *Server) CallOnConnStart(conn abstract_interface.AConnection){
+	if s.OnConnStart!=nil{
+		fmt.Println("Call OnConnStart..")
+		s.OnConnStart(conn)
+	}
+}
+//call OnConnStop
+func(s *Server) CallOnConnStop(conn abstract_interface.AConnection){
+	if s.OnConnStop !=nil{
+		fmt.Println("Call OnConnStop...")
+		s.OnConnStop(conn)
+	}
 }
