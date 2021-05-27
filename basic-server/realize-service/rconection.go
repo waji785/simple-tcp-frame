@@ -10,6 +10,8 @@ import (
 )
 
 type Connection struct {
+	//conn ownership
+	TcpServer abstract_interface.AServer
 	//socket TCP
 	Conn *net.TCPConn
 	//ID
@@ -26,8 +28,9 @@ type Connection struct {
 	MsgHandle abstract_interface.AMsgHandle
 }
 
-func NewConnection(conn *net.TCPConn, connID uint32, msgHandler abstract_interface.AMsgHandle) *Connection {
+func NewConnection(server abstract_interface.AServer,conn *net.TCPConn, connID uint32, msgHandler abstract_interface.AMsgHandle) *Connection {
 	c := &Connection{
+		TcpServer: server,
 		Conn:     conn,
 		ConnID:   connID,
 		MsgHandle:   msgHandler,
@@ -35,6 +38,7 @@ func NewConnection(conn *net.TCPConn, connID uint32, msgHandler abstract_interfa
 		msgChan: make(chan []byte),
 		ExitChan: make(chan bool, 1),
 	}
+	c.TcpServer.GetConnectionManager().Add(c)
 	return c
 }
 
@@ -131,7 +135,10 @@ func (c *Connection) Stop() {
 	c.isClosed = true
 	//close socket
 	c.Conn.Close()
+	c.ExitChan<-true
+	c.TcpServer.GetConnectionManager().Remove(c)
 	close(c.ExitChan)
+	close(c.msgChan)
 }
 
 //get conn from socket

@@ -10,4 +10,6 @@ type AServer interface {
 	Run()
 	//router,support of server
 	AddRouter(msgID uint32,router ARouter)
+	//get the manager of server
+	GetConnectionManager() AConnManager
 }
