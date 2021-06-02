@@ -25,7 +25,7 @@ func(dp *DataPack) Pack(msg abstract_interface.AMessage)([]byte,error){
 	dataBuffer:=bytes.NewBuffer([]byte{})
 	//write must be in order
 	//write in datalen
-	if err :=binary.Write(dataBuffer,binary.LittleEndian,msg.GetMsLen());err !=nil{
+	if err :=binary.Write(dataBuffer,binary.LittleEndian,msg.GetMsgLen());err !=nil{
 		return nil,err
 	}
 	//write in msgid

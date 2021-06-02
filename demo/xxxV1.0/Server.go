@@ -56,7 +56,7 @@ func DoConnectionLost(conn abstract_interface.AConnection)  {
 
 func main() {
 	//使用API，创建句柄
-	s := realize_service.NewServer("demoV0.9")
+	s := realize_service.NewServer("demoV1.0")
 	//hook
 	s.SetOnConnStart(DoConnectionBegin)
 	s.SetOnConnStop(DoConnectionLost)
